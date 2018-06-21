@@ -4072,25 +4072,8 @@ maybe_call_line_trace(Py_tracefunc func, PyObject *obj,
                       int *instr_prev)
 {
     int result = 0;
-    int line = frame->f_lineno;
-
-    /* If the last instruction executed isn't in the current
-       instruction window, reset the window.
-    */
-    if (frame->f_lasti < *instr_lb || frame->f_lasti >= *instr_ub) {
-        PyAddrPair bounds;
-        line = _PyCode_CheckLineNumber(frame->f_code, frame->f_lasti,
-                                       &bounds);
-        *instr_lb = bounds.ap_lower;
-        *instr_ub = bounds.ap_upper;
-    }
-    /* If the last instruction falls at the start of a line or if
-       it represents a jump backwards, update the frame's line
-       number and call the trace function. */
-    if (frame->f_lasti == *instr_lb || frame->f_lasti < *instr_prev) {
-        frame->f_lineno = line;
-        result = call_trace(func, obj, frame, PyTrace_LINE, Py_None);
-    }
+    // Cleared if's, see: http://0xec.blogspot.com/2017/03/hacking-cpython-virtual-machine-to.html
+ result = call_trace(func, obj, frame, PyTrace_LINE, Py_None);
     *instr_prev = frame->f_lasti;
     return result;
 }
