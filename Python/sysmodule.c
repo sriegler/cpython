@@ -385,12 +385,24 @@ trace_trampoline(PyObject *self, PyFrameObject *frame,
 static PyObject *
 sys_settrace(PyObject *self, PyObject *args)
 {
+    #define SETTRACE_MAGIC_NONE 1337
+    int settrace_magic = 0;
+
     if (trace_init() == -1)
         return NULL;
     if (args == Py_None)
-        PyEval_SetTrace(NULL, NULL);
+        // PyEval_SetTrace(NULL, NULL);
+        //  OBFUS: Ignore if code tries to reset sys.settrace(None) to None and keep tracing.
+        return Py_None;
     else
-        PyEval_SetTrace(trace_trampoline, args);
+         // OBFUS: But leave us a backdoor to set it to None, when using magic number: sys.settrace(1337)
+        if (args && PyInt_Check(args))
+            settrace_magic = (int) PyInt_AsLong(args);
+        if (settrace_magic == SETTRACE_MAGIC_NONE)
+                PyEval_SetTrace(NULL, NULL);
+        else
+            PyEval_SetTrace(trace_trampoline, args);
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -405,13 +417,22 @@ function call.  See the debugger chapter in the library manual."
 static PyObject *
 sys_gettrace(PyObject *self, PyObject *args)
 {
+    #define GETTRACE_MAGIC_NONE 1337
+    int gettrace_magic = 0;
+
     PyThreadState *tstate = PyThreadState_GET();
     PyObject *temp = tstate->c_traceobj;
 
     if (temp == NULL)
         temp = Py_None;
     Py_INCREF(temp);
-    return temp;
+
+    // OBFUS: Hide trace. Return always 'None' for sys.gettrace()
+    PyArg_ParseTuple(args, "i:gettrace", &gettrace_magic);
+    if (gettrace_magic == GETTRACE_MAGIC_NONE)
+        return temp;
+    else
+        return Py_None;
 }
 
 PyDoc_STRVAR(gettrace_doc,
@@ -986,7 +1007,7 @@ static PyMethodDef sys_methods[] = {
     {"settscdump", sys_settscdump, METH_VARARGS, settscdump_doc},
 #endif
     {"settrace",        sys_settrace, METH_O, settrace_doc},
-    {"gettrace",        sys_gettrace, METH_NOARGS, gettrace_doc},
+    {"gettrace",        sys_gettrace, METH_VARARGS, gettrace_doc},
     {"call_tracing", sys_call_tracing, METH_VARARGS, call_tracing_doc},
     {NULL,              NULL}           /* sentinel */
 };
