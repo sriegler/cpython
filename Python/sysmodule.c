@@ -428,7 +428,7 @@ sys_gettrace(PyObject *self, PyObject *args)
     Py_INCREF(temp);
 
     // OBFUS: Hide trace. Return always 'None' for sys.gettrace()
-    PyArg_ParseTuple(args, "i:gettrace", &gettrace_magic);
+    PyArg_ParseTuple(args, "|i:gettrace", &gettrace_magic);
     if (gettrace_magic == GETTRACE_MAGIC_NONE)
         return temp;
     else
