@@ -1347,6 +1347,29 @@ value has (or contains an object that has) an unsupported type.\n\
 New in version 2.4: The version argument indicates the data format that\n\
 dumps should use.");
 
+static PyObject *
+marshal_dumps_from_id(PyObject *self, PyObject *args)
+{
+    PyObject *x;
+    long ea;
+    int version = Py_MARSHAL_VERSION;
+    if (!PyArg_ParseTuple(args, "l|i:dumps_from_id", &ea, &version))
+        return NULL;
+    x = (PyObject *) ea;
+    return PyMarshal_WriteObjectToString(x, version);
+}
+
+PyDoc_STRVAR(dumps_from_id_doc,
+"dumps_from_id(address[, version])\n\
+\n\
+Special patch for marshalling a python object from an effective address.\n\
+\n\
+Return the string that would be written to a file by dump(value, file).\n\
+The value must be a supported type. Raise a ValueError exception if\n\
+value has (or contains an object that has) an unsupported type.\n\
+\n\
+New in version 2.4: The version argument indicates the data format that\n\
+dumps should use.");
 
 static PyObject *
 marshal_loads(PyObject *self, PyObject *args)
@@ -1378,6 +1401,7 @@ static PyMethodDef marshal_methods[] = {
     {"dump",            marshal_dump,   METH_VARARGS,   dump_doc},
     {"load",            marshal_load,   METH_O,         load_doc},
     {"dumps",           marshal_dumps,  METH_VARARGS,   dumps_doc},
+    {"dumps_from_id",           marshal_dumps_from_id,  METH_VARARGS,   dumps_from_id_doc},
     {"loads",           marshal_loads,  METH_VARARGS,   loads_doc},
     {NULL,              NULL}           /* sentinel */
 };
